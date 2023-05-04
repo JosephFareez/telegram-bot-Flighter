@@ -1,31 +1,43 @@
-import json
-
 import requests
-
+from telebot import custom_filters
 # from background import keep_alive  # импорт функции для поддержки работоспособности
-import pip
+from telegram_bot_calendar import DetailedTelegramCalendar
 
 import config_data.config
-from telebot import custom_filters
-from states.states import MyStates
-
 from loader import bot
+from states.get_states import MyStates
 
 
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.set_state(message.from_user.id, MyStates.departure_at, message.chat.id)
-    bot.send_message(message.chat.id, f"Привет, {message.from_user.first_name}, Когда вы хотите летит, дата в "
-                                      f"формате: 2023-01-30?")
+    calendar, step = DetailedTelegramCalendar().build()
+    bot.send_message(message.chat.id,
+                     f"Когда вы хотите лететь? ",
+                     reply_markup=calendar)
 
 
-@bot.message_handler(state="*", commands=['cancel'])
-def any_state(message):
-    """
-    Cancel state
-    """
-    bot.send_message(message.chat.id, "Ваш ввод был отменен .")
-    bot.delete_state(message.from_user.id, message.chat.id)
+@bot.callback_query_handler(func=DetailedTelegramCalendar.func())
+def cal(c):
+    result, key, step = DetailedTelegramCalendar().process(c.data)
+    if not result and key:
+        bot.edit_message_text(f"Когда вы хотите лететь? ",
+                              c.message.chat.id,
+                              c.message.message_id,
+                              reply_markup=key)
+    elif result:
+        with bot.add_data(result) as data:
+            data['departure_at'] = result
+
+
+#
+# @bot.message_handler(state="*", commands=['cancel'])
+# def any_state(message):
+#     """
+#     Cancel state
+#     """
+#     bot.send_message(message.chat.id, "Ваш ввод был отменен .")
+#     bot.delete_state(message.from_user.id, message.chat.id)
 
 
 @bot.message_handler(state=MyStates.departure_at)

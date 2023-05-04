@@ -1,0 +1,1 @@
+{'success': True, 'data': {'CAI': {'0': {'price': 30318, 'airline': 'SU', 'flight_number': 400, 'departure_at': '2023-05-22T09:05:00+03:00', 'return_at': '2023-06-15T16:15:00+02:00', 'expires_at': '2023-05-04T12:05:05Z'}}}, 'currency': 'rub'}
