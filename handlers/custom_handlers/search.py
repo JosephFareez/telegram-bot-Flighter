@@ -1,48 +1,44 @@
+import json
+
 import requests
 from telebot import custom_filters
 # from background import keep_alive  # импорт функции для поддержки работоспособности
-from telegram_bot_calendar import DetailedTelegramCalendar
 
 import config_data.config
 from loader import bot
 from states.get_states import MyStates
 
 
+def find_country_code(city_name, file_path="cities.json"):
+    with open(file_path, "r", encoding="utf-8") as f:
+        cities = json.load(f)
+        for city in cities:
+            if city['name'].lower() == city_name.lower():
+                return "Код страны: " + city['country_code']
+        return "Город не найден"
+
+
+
 @bot.message_handler(commands=['start'])
-def start(message):
+def search(message):
     bot.set_state(message.from_user.id, MyStates.departure_at, message.chat.id)
-    calendar, step = DetailedTelegramCalendar().build()
-    bot.send_message(message.chat.id,
-                     f"Когда вы хотите лететь? ",
-                     reply_markup=calendar)
+    bot.send_message(message.chat.id, f"Привет, {message.from_user.first_name}, Когда вы хотите лететь? ")
+    find_country_code(message)
 
 
-@bot.callback_query_handler(func=DetailedTelegramCalendar.func())
-def cal(c):
-    result, key, step = DetailedTelegramCalendar().process(c.data)
-    if not result and key:
-        bot.edit_message_text(f"Когда вы хотите лететь? ",
-                              c.message.chat.id,
-                              c.message.message_id,
-                              reply_markup=key)
-    elif result:
-        with bot.add_data(result) as data:
-            data['departure_at'] = result
-
-
-#
-# @bot.message_handler(state="*", commands=['cancel'])
-# def any_state(message):
-#     """
-#     Cancel state
-#     """
-#     bot.send_message(message.chat.id, "Ваш ввод был отменен .")
-#     bot.delete_state(message.from_user.id, message.chat.id)
+@bot.message_handler(state="*", commands=['cancel'])
+def any_state(message):
+    """
+    Cancel state
+    """
+    bot.send_message(message.chat.id, "Ваш ввод был отменен .")
+    bot.delete_state(message.from_user.id, message.chat.id)
 
 
 @bot.message_handler(state=MyStates.departure_at)
 def origin_get(message):
-    bot.send_message(message.chat.id, 'Откуда вы хотите летит, название город в формате: MOW? ')
+    bot.send_message(message.chat.id, 'Откуда вы хотите лететь, название город в формате: MOW? ')
+    find_country_code(message)
     bot.set_state(message.from_user.id, MyStates.origin, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['departure_at'] = message.text
@@ -50,7 +46,8 @@ def origin_get(message):
 
 @bot.message_handler(state=MyStates.origin)
 def get_destination(message):
-    bot.send_message(message.chat.id, "Куда вы хотите летит, название город в формате: MOW?")
+    bot.send_message(message.chat.id, "Куда вы хотите лететь, название город в формате: MOW?")
+    find_country_code(message)
     bot.set_state(message.from_user.id, MyStates.destination, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['origin'] = message.text
@@ -58,7 +55,7 @@ def get_destination(message):
 
 @bot.message_handler(state=MyStates.destination)
 def return_at_age(message):
-    bot.send_message(message.chat.id, "Когда вы хотите прилетит, дата в формате: 2023-01-30? ")
+    bot.send_message(message.chat.id, "Когда вы хотите прилететь? ")
     bot.set_state(message.from_user.id, MyStates.return_at, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['destination'] = message.text
@@ -82,8 +79,8 @@ def ready_for_answer(message):
         }
 
         response = requests.get('http://api.travelpayouts.com/v1/prices/cheap?', params=params)
-        # response_0 = requests.get('https://api.travelpayouts.com/aviasales_resources/v3/cities.json?locale=ru')
-        # print(response_0.json())
+
+
         if 200 <= response.status_code <= 399:
             result = response.json()
             with open('received_data.json', 'w+') as file:
@@ -95,10 +92,13 @@ def ready_for_answer(message):
         result = response.json()
         with open('received_data.json', 'w+') as file:
             file.write(str(result))
-        trips = ([result['data']['destination']])
+        trips = str([result['data']['destination']])
 
         bot.send_message(message.chat.id, str(trips), parse_mode="html")
         bot.delete_state(message.from_user.id, message.chat.id)
+
+
+
 
 
 @bot.message_handler(commands=['help'])
@@ -107,10 +107,8 @@ def help_handler(message):
         bot.send_message(message.chat.id, "Напиши help")
 
 
+
 bot.add_custom_filter(custom_filters.StateFilter(bot))
 bot.add_custom_filter(custom_filters.IsDigitFilter())
 
-if __name__ == '__main__':
-    # keep_alive()
 
-    bot.polling(none_stop=True, interval=0)
