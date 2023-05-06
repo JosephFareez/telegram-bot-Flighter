@@ -9,12 +9,12 @@ from loader import bot
 from states.get_states import MyStates
 
 
-# def get_cities():
+def get_cities():
 
-# """Функция загрузки коды города в формате JSON"""
-#     response_0 = requests.get('https://api.travelpayouts.com/aviasales_resources/v3/cities.json?locale=ru')
-#     with open("cities.json", "w+", encoding="UTF-8") as cities:
-#         cities.write(response_0.text)
+    """Функция загрузки коды города в формате JSON"""
+    response_0 = requests.get('https://api.travelpayouts.com/aviasales_resources/v3/cities.json?locale=ru')
+    with open("cities.json", "w+", encoding="UTF-8") as cities:
+        cities.write(response_0.text)
 
 
 def find_country_code(city_name, file_path="cities.json"):
