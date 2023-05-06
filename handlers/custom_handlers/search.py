@@ -9,12 +9,12 @@ from loader import bot
 from states.get_states import MyStates
 
 
-def get_cities():
-
-    """Функция загрузки коды города в формате JSON"""
-    response_0 = requests.get('https://api.travelpayouts.com/aviasales_resources/v3/cities.json?locale=ru')
-    with open("cities.json", "w+", encoding="UTF-8") as cities:
-        cities.write(response_0.text)
+# def get_cities():
+#
+#     """Функция загрузки коды города в формате JSON"""
+#     response_0 = requests.get('https://api.travelpayouts.com/aviasales_resources/v3/cities.json?locale=ru')
+#     with open("cities.json", "w+", encoding="UTF-8") as cities:
+#         cities.write(response_0.text)
 
 
 def find_country_code(city_name, file_path="cities.json"):
@@ -31,7 +31,7 @@ def find_country_code(city_name, file_path="cities.json"):
 def search(message):
     """Функция start для получения дата вылета """
     bot.set_state(message.from_user.id, MyStates.departure_at, message.chat.id)
-    bot.send_message(message.chat.id, f" *Привет, {message.from_user.first_name}, Когда вы хотите лететь? *",
+    bot.send_message(message.chat.id, f" *Привет, {message.from_user.first_name}, Введите дата вылета: *",
                      parse_mode="MarkDown")
     find_country_code(message)
 
@@ -46,7 +46,7 @@ def any_state(message):
 @bot.message_handler(state=MyStates.departure_at)
 def origin_get(message):
     """Функция для получения город отправление """
-    bot.send_message(message.chat.id, '*Откуда вы хотите лететь? *',
+    bot.send_message(message.chat.id, '*Введите город вылета: *',
                      parse_mode="MarkDown")
     bot.set_state(message.from_user.id, MyStates.origin, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
@@ -56,7 +56,7 @@ def origin_get(message):
 @bot.message_handler(state=MyStates.origin)
 def get_destination(message):
     """Функция для получения город перелета    """
-    bot.send_message(message.chat.id, "*Куда вы хотите лететь, название город в формате: MOW?*", parse_mode="MarkDown")
+    bot.send_message(message.chat.id, "*Введите город перелета: *", parse_mode="MarkDown")
     bot.set_state(message.from_user.id, MyStates.destination, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['origin'] = find_country_code(message.text)
@@ -65,7 +65,7 @@ def get_destination(message):
 @bot.message_handler(state=MyStates.destination)
 def return_at_age(message):
     """Функция для получения дата возврата """
-    bot.send_message(message.chat.id, "*Когда вы хотите прилететь? *", parse_mode="MarkDown")
+    bot.send_message(message.chat.id, "*Введите дата перелета *", parse_mode="MarkDown")
     bot.set_state(message.from_user.id, MyStates.return_at, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['destination'] = find_country_code(message.text)
