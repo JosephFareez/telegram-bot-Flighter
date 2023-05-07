@@ -11,5 +11,6 @@ API_KEY = os.getenv("API_KEY")
 DEFAULT_COMMANDS = (
     ("start", "Запустить бота"),
     ("help", "Вывести справку"),
-
+    ("search_low_price", "Поиск дешёвые билеты "),
+    ("search_month", "поиск билеты в течение месяца")
 )

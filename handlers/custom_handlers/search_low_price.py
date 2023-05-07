@@ -27,7 +27,7 @@ def find_country_code(city_name, file_path="cities.json"):
         return "Город не найден"
 
 
-@bot.message_handler(commands=['start'])
+@bot.message_handler(commands=['search_low_price'])
 def search(message):
     """Функция start для получения дата вылета """
     bot.set_state(message.from_user.id, MyStates.departure_at, message.chat.id)
@@ -99,16 +99,29 @@ def ready_for_answer(message):
                 result = response.json()
                 with open('received_data.json', 'w+') as file:
                     file.write(str(result))
-                trips = (result['data'])
+                trips = next(iter([result['data']]))
+                for flight in trips.values():
+                    for i_key in flight.values():
+                        bot.send_message(message.chat.id, json.dumps(i_key, indent=4), parse_mode="html")
+                        # print([i_key['price'],
+                        #        i_key['airline'],
+                        #        i_key['flight_number'],
+                        #        i_key['departure_at'],
+                        #        i_key['return_at']])
 
-                return bot.send_message(message.chat.id, str(trips))
+                        # bot.send_message(message.chat.id, str((i_key['price'],
+                        #                                        i_key['airline'],
+                        #                                        i_key['flight_number'],
+                        #                                        i_key['departure_at'],
+                        #                                        i_key['return_at']
+                        #                                        )))
 
-            result = response.json()
-            with open('received_data.json', 'w+') as file:
-                file.write(str(result))
-            trips = str([result['data']['destination']])
+            # result = response.json()
+            # with open('received_data.json', 'w+') as file:
+            #     file.write(str(result))
+            # trips = next(iter([result['data']]))
 
-            bot.send_message(message.chat.id, json.dumps(trips, indent=8), parse_mode="html")
+            # bot.send_message(message.chat.id, json.dumps(trips, indent=8), parse_mode="html")
             bot.delete_state(message.from_user.id, message.chat.id)
 
 
