@@ -60,45 +60,65 @@ def get_destination(message):
         data['destination'] = find_country_code(message.text)
 
 
+# @bot.message_handler(state=MyStates.departure_at)
+# def get_return_date(message):
+#     """Функция для получения дата перелета"""
+#     bot.send_message(message.chat.id, "*Введите дата перелета: *", parse_mode="MarkDown")
+#     bot.set_state(message.from_user.id, MyStates.return_date, message.chat.id)
+#     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+#         data['departure_at'] = message.text
+
+
 @bot.message_handler(state=MyStates.departure_at)
 def redy_to_answer(message):
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
-        # data['destination'] = find_country_code(message.text)
-        if data.get('destination') is None or data.get('origin') is None:
-            bot.send_message(message.chat.id, "*Вы не указали пункты вылета или перелета. Введите /search_low_price "
-                                              "для начала "
-                                              "поиска.*", parse_mode="MarkDown")
-            return
+        data['departure_at'] = message.text
+        currency = 'rub'
+        limit = 30
+        token = config_data.config.API_KEY
+        sorting = 'flights'
+        origin = data['origin']
+        destination = data['destination']
+        departure_at = data['departure_at']
+
+
+        params = {
+            'origin': origin,
+            'destination': destination,
+            'departure_at': departure_at,
+
+            'currency': currency,
+            'limit': limit,
+            'token': token,
+            'sorting': sorting,
+
+        }
+
+        response = requests.get('https://api.travelpayouts.com/v1/prices/cheap?', params=params)
+
+        if 200 <= response.status_code <= 399:
+            result = response.json()
+            with open('received_data.json', 'w+') as file:
+                file.write(str(result))
+            trips = next(iter([result['data']]))
+            for flights in trips.values():
+                for flight in flights.values():
+                    bot.send_message(message.chat.id, f"Цена: {flight['price']} рублей\n"
+                                                      f"Авиакомпания: {flight['airline']}\n"
+                                                      f"Откуда: {origin} ({flight['departure_at']})\n"
+                                                      f"Куда: {destination} ({flight['return_at']})\n"
+                                                      f"Ссылка на билет: https://www.aviasales.ru/search/{origin}"
+                                                      f"{departure_at}"
+                                                      f"{destination}""1\n\n")
+
+                else:
+                    bot.send_message(message.chat.id, "*Нет доступных билетов на выбранные даты.*",
+                                     parse_mode="MarkDown")
         else:
-            currency = 'rub'
-            limit = 30
-            token = config_data.config.API_KEY
-            sorting = 'price'
-
-            params = {
-                'origin': data['origin'],
-                'destination': data['destination'],
-                'departure_at': message.text,
-                'currency': currency,
-                # 'return_at': message.text,
-                'limit': limit,
-                'token': token,
-                'sorting': sorting,
-
-            }
-
-            response = requests.get('https://api.travelpayouts.com/v1/prices/cheap?', params=params)
-
-            if 200 <= response.status_code <= 399:
-                result = response.json()
-                with open('received_data.json', 'w+') as file:
-                    file.write(str(result))
-                trips = next(iter([result['data']]))
-                for flight in trips.values():
-                    for i_key in flight.values():
-                        bot.send_message(message.chat.id, json.dumps(i_key, indent='\n'), parse_mode="html")
-
-            bot.delete_state(message.from_user.id, message.chat.id)
+            print(response)
+            bot.send_message(message.chat.id, "*Ошибка при запросе к API. Попробуйте позже.*",
+                             parse_mode="MarkDown")
+    bot.delete_state(message.from_user.id, message.chat.id)
 
 
 bot.add_custom_filter(custom_filters.StateFilter(bot))
