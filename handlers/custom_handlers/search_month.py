@@ -1,8 +1,6 @@
 import json
-import datetime
 import requests
 from telebot import custom_filters
-
 # from background import keep_alive  # импорт функции для поддержки работоспособности
 import config_data.config
 from loader import bot
