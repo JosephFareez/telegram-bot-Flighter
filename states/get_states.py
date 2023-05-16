@@ -5,7 +5,7 @@ state_storage = StateMemoryStorage()
 
 
 class MyStates(StatesGroup):
-    # depart_date = State()  # 'When? ')
+    depart_date = State()  # 'When? ')
     origin = State()  # 'From? ')
     destination = State()  # 'To? ')
     departure_at = State()  # 'Back? ')
