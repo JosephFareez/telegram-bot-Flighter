@@ -79,7 +79,7 @@ def redy_to_answer(message):
         currency = 'rub'
         limit = 30
         token = config_data.config.API_KEY
-        sorting = 'flights'
+        sorting = 'price'
         origin = data['origin']
         destination = data['destination']
         departure_at = data['departure_at']
