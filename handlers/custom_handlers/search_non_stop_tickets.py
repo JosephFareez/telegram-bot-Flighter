@@ -101,24 +101,24 @@ def redy_to_answer(message):
 
         if 200 <= response.status_code <= 399:
             result = response.json()
-            try:
-                with open('received_data.json', 'w+') as file:
-                    file.write(str(result))
-                trips = next(iter([result['data']]))
-                for flights in trips.values():
-                    for flight in flights.values():
-                        bot.send_message(message.chat.id, f"Цена: {flight['price']} рублей\n"
-                                                          f"Авиакомпания: {flight['airline']}\n"
-                                                          f"Откуда: {origin} ({flight['departure_at']})\n"
-                                                          f"Куда: {destination} ({flight['return_at']})\n"
-                                                          f"Ссылка на билет: https://www.aviasales.ru/search/{origin}"
-                                                          f"{flight['departure_at']}"
-                                                          f"{destination}""1\n\n")
 
-            except:
+            with open('received_data.json', 'w+') as file:
+                file.write(str(result))
+                if file.__sizeof__() > 0:
+                    trips = next(iter([result['data']]))
+                    for flights in trips.values():
+                        for flight in flights.values():
+                            bot.send_message(message.chat.id, f"Цена: {flight['price']} рублей\n"
+                                                              f"Авиакомпания: {flight['airline']}\n"
+                                                              f"Откуда: {origin}({datetime.strptime(flight['departure_at'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y %H:%M')})\n"
+                                                              f"Куда: {destination} ({datetime.strptime(flight['return_at'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y %H:%M')})\n"
+                                                              f"Ссылка на билет: https://www.aviasales.ru/search/{origin}"
+                                                              f"{flight['departure_at']}"
+                                                              f"{destination}""1\n\n")
 
-                bot.send_message(message.chat.id, "*Нет доступных билетов на выбранные даты.*",
-                                 parse_mode="MarkDown")
+                else:
+                    bot.send_message(message.chat.id, "*Нет доступных билетов на выбранные даты.*",
+                             parse_mode="MarkDown")
         else:
             print(response)
             bot.send_message(message.chat.id, "*Ошибка при запросе к API. Попробуйте позже.*",

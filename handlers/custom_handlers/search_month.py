@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import requests
 from telebot import custom_filters
@@ -45,64 +46,73 @@ def any_state(message):
 @bot.message_handler(state=MyStates.origin)
 def get_destination(message):
     """Функция для получения город перелета"""
-    bot.send_message(message.chat.id, "*Введите город перелета: *", parse_mode="MarkDown")
+    bot.send_message(message.chat.id, "*Введите город прилета: *", parse_mode="MarkDown")
     bot.set_state(message.from_user.id, MyStates.destination, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['origin'] = find_country_code(message.text)
 
 
 @bot.message_handler(state=MyStates.destination)
-def get_destination(message):
+def get_departure_date(message):
     """Функция для получения дата вылета"""
     bot.send_message(message.chat.id, "*Введите дата вылета: *", parse_mode="MarkDown")
-    bot.set_state(message.from_user.id, MyStates.departure_date, message.chat.id)
+    bot.set_state(message.from_user.id, MyStates.departure_at, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['origin'] = find_country_code(message.text)
 
 
 # result
 @bot.message_handler(state=MyStates.departure_at)
-def ready_for_answer(message):
-    """Функция обработка ответ пользователя и получения ответа от API и направит его получению"""
+def redy_to_answer(message):
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
-        data['destination'] = find_country_code(message.text)
-    with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
-        if data.get('destination') is None:
-            bot.send_message(message.chat.id, "*Вы не указали пункт назначения. Введите /search_month для начала "
-                                              "поиска.*", parse_mode="MarkDown")
-            return
+        data['departure_at'] = message.text
+        currency = 'rub'
+        limit = 30
+        token = config_data.config.API_KEY
+        sorting = 'flights'
+        origin = data['origin']
+        destination = data['destination']
+        departure_at = data['departure_at']
+
+        params = {
+            'origin': origin,
+            'destination': destination,
+            'departure_at': departure_at,
+            'currency': currency,
+            'limit': limit,
+            'token': token,
+            'sorting': sorting
+        }
+
+        response = requests.get('https://api.travelpayouts.com/v1/prices/calendar?', params=params)
+        # print(response)
+
+        if 200 <= response.status_code <= 399:
+            result = response.json()
+            with open('received_data.json', 'w+') as file:
+                file.write(str(result))
+                if file.__sizeof__() > 0:
+                    trips = next(iter([result['data']]))
+                    for flights in trips.values():
+                        for flight in flights.values():
+                            bot.send_message(message.chat.id, f"Цена: {flight['price']} рублей\n"
+                                                              f"Авиакомпания: {flight['airline']}\n"
+                                                              f"Откуда:{origin}({datetime.strptime(flight['departure_at'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y %H:%M')})\n"
+                                                              f"Куда: {destination} ({datetime.strptime(flight['return_at'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y %H:%M')})\n"
+                                                              f"Ссылка на билет: https://www.aviasales.ru/search/{origin}"
+                                                              f"{departure_at}"
+                                                              f"{destination}""1\n\n")
+
+                else:
+                    bot.send_message(message.chat.id, "*Нет доступных билетов на выбранные даты.*",
+                                     parse_mode="MarkDown")
         else:
-            currency = 'rub'
-            limit = 30
-            token = config_data.config.API_KEY
-            sorting = 'departure_at'
-            calendar_type = data.get('departure_date')
+            print(response)
+            bot.send_message(message.chat.id, "*Ошибка при запросе к API. Попробуйте позже.*",
+                             parse_mode="MarkDown")
 
-            params = {
-                'origin': data['origin'],
-                'destination': data['destination'],
-                'calendar_type': calendar_type,
-                'currency': currency,
-                # 'return_at': message.text,
-                'limit': limit,
-                'token': token,
-                'sorting': sorting,
+        bot.delete_state(message.from_user.id, message.chat.id)
 
-            }
 
-            response = requests.get('https://api.travelpayouts.com/v1/prices/calendar?', params=params)
-            # print(response)
-
-            if 200 <= response.status_code <= 399:
-                result = response.json()
-                with open('received_data.json', 'w+') as file:
-                    file.write(str(result))
-                trips = next(iter([result['data']]))
-                for flight in trips.values():
-                    for i_key in flight.values():
-                        bot.send_message(message.chat.id, json.dumps(i_key, indent='\n'), parse_mode="html")
-
-            bot.delete_state(message.from_user.id, message.chat.id)
-
-        bot.add_custom_filter(custom_filters.StateFilter(bot))
-        bot.add_custom_filter(custom_filters.IsDigitFilter())
+bot.add_custom_filter(custom_filters.StateFilter(bot))
+bot.add_custom_filter(custom_filters.IsDigitFilter())

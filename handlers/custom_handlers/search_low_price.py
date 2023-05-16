@@ -7,7 +7,7 @@ from telebot import custom_filters
 import config_data.config
 from loader import bot
 from states.get_states import MyStates
-from time import strftime
+
 
 
 # def get_cities():
@@ -47,7 +47,7 @@ def any_state(message):
 @bot.message_handler(state=MyStates.origin)
 def origin_destination(message):
     """Функция для получения город отправление """
-    bot.send_message(message.chat.id, '*Введите город перелета: *',
+    bot.send_message(message.chat.id, '*Введите город прилета: *',
                      parse_mode="MarkDown")
     bot.set_state(message.from_user.id, MyStates.destination, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
@@ -101,16 +101,17 @@ def redy_to_answer(message):
             result = response.json()
             with open('received_data.json', 'w+') as file:
                 file.write(str(result))
-            trips = next(iter([result['data']]))
-            for flights in trips.values():
-                for flight in flights.values():
-                    bot.send_message(message.chat.id, f"Цена: {flight['price']} рублей\n"
-                                                      f"Авиакомпания: {flight['airline']}\n"
-                                                      f"Откуда: {origin} ({flight['departure_at']})\n"
-                                                      f"Куда: {destination} ({flight['return_at']})\n"
-                                                      f"Ссылка на билет: https://www.aviasales.ru/search/{origin}"
-                                                      f"{departure_at}"
-                                                      f"{destination}""1\n\n")
+                if file.__sizeof__() > 0:
+                    trips = next(iter([result['data']]))
+                    for flights in trips.values():
+                        for flight in flights.values():
+                            bot.send_message(message.chat.id, f"Цена: {flight['price']} рублей\n"
+                                                              f"Авиакомпания: {flight['airline']}\n"
+                                                              f"Откуда: {origin}({datetime.strptime(flight['departure_at'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y %H:%M')})\n"
+                                                              f"Куда: {destination} ({datetime.strptime(flight['return_at'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y %H:%M')})\n" 
+                                                              f"Ссылка на билет: https://www.aviasales.ru/search/{origin}"
+                                                              f"{departure_at}"
+                                                              f"{destination}""1\n\n")
 
                 else:
                     bot.send_message(message.chat.id, "*Нет доступных билетов на выбранные даты.*",
