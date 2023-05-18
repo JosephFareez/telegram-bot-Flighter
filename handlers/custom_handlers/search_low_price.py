@@ -1,7 +1,6 @@
 from datetime import datetime
 import requests
 from telebot import custom_filters
-# from background import keep_alive  # импорт функции для поддержки работоспособности
 import config_data.config
 from loader import bot
 from states.get_states import MyStates
@@ -79,11 +78,11 @@ def _ready_to_answer(message):
                             departure = ''.join(filter(str.isalnum, departure_at))
                             bot.send_message(message.chat.id, f"Цена: {flight['price']} рублей\n"
                                                               f"Авиакомпания: {flight['airline']}\n"
-                                                              f"Откуда: {origin}({datetime.strptime(flight['departure_at'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y %H:%M')})\n"
-                                                              f"Куда: {destination} ({datetime.strptime(flight['return_at'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y %H:%M')})\n"
+                                                              f"Туда: {origin} --> {destination} ({datetime.strptime(flight['departure_at'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y %H:%M')})\n"
+                                                              f"Обратно: {destination} --> {origin} ({datetime.strptime(flight['return_at'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y %H:%M')})\n"
                                                               f"Ссылка на билет: https://www.aviasales.ru/search/{origin}"
                                                               f"{departure}"
-                                                              f"{destination}1?destination_airports=0&destination_airports=0\n\n")
+                                                              f"{destination}""1?\n\n")
 
                 else:
                     bot.send_message(message.chat.id, "*Нет доступных билетов на выбранные даты.*",

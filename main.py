@@ -1,8 +1,8 @@
 from loader import bot
 import handlers  # noqa
-from utils.set_bot_commands import set_default_commands
+# from background import keep_alive # импорт функции для поддержки работоспособности
 
 
 if __name__ == "__main__":
-
+    # keep_alive()
     bot.infinity_polling()
