@@ -1,36 +1,18 @@
 from datetime import datetime
-import json
 import requests
 from telebot import custom_filters
 # from background import keep_alive  # импорт функции для поддержки работоспособности
 import config_data.config
 from loader import bot
 from states.get_states import MyStates
-
-
-# def get_cities():
-#
-#     """Функция загрузки коды города в формате JSON"""
-#     response_0 = requests.get('https://api.travelpayouts.com/aviasales_resources/v3/cities.json?locale=ru')
-#     with open("cities.json", "w+", encoding="UTF-8") as cities:
-#         cities.write(response_0.text)
-
-
-def find_country_code(city_name, file_path="cities.json"):
-    """Функция для поиска города вводимое пользователю в файле JSON """
-    with open(file_path, "r", encoding="utf-8") as f:
-        cities = json.load(f)
-        for city in cities:
-            if city['name'] == city_name:
-                return city["code"]
-        return "Город не найден"
+from database.city_finder import find_country_code
 
 
 @bot.message_handler(commands=['search_month'])
-def search(message):
+def _search_month(message):
     """Функция start для получения город вылета"""
     bot.set_state(message.from_user.id, MyStates.origin, message.chat.id)
-    bot.send_message(message.chat.id, f" *Привет, {message.from_user.first_name}, Введите город вылета: *",
+    bot.send_message(message.chat.id, f" *Введите город вылета: *",
                      parse_mode="MarkDown")
 
     find_country_code(message)
@@ -44,7 +26,7 @@ def any_state(message):
 
 
 @bot.message_handler(state=MyStates.origin)
-def get_destination(message):
+def _get_destination(message):
     """Функция для получения город перелета"""
     bot.send_message(message.chat.id, "*Введите город прилета: *", parse_mode="MarkDown")
     bot.set_state(message.from_user.id, MyStates.destination, message.chat.id)
@@ -53,7 +35,7 @@ def get_destination(message):
 
 
 @bot.message_handler(state=MyStates.destination)
-def get_departure_date(message):
+def _get_departure_date(message):
     """Функция для получения дата вылета"""
     bot.send_message(message.chat.id, "*Введите дата вылета: *", parse_mode="MarkDown")
     bot.set_state(message.from_user.id, MyStates.departure_at, message.chat.id)
@@ -63,7 +45,7 @@ def get_departure_date(message):
 
 # result
 @bot.message_handler(state=MyStates.departure_at)
-def redy_to_answer(message):
+def _ready_to_answer(message):
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['departure_at'] = message.text
         currency = 'rub'
@@ -85,7 +67,6 @@ def redy_to_answer(message):
         }
 
         response = requests.get('https://api.travelpayouts.com/v1/prices/calendar?', params=params)
-        # print(response)
 
         if 200 <= response.status_code <= 399:
             result = response.json()
@@ -95,13 +76,14 @@ def redy_to_answer(message):
                     trips = next(iter([result['data']]))
                     for flights in trips.values():
                         for flight in flights.values():
+                            departure = ''.join(filter(str.isalnum, departure_at))
                             bot.send_message(message.chat.id, f"Цена: {flight['price']} рублей\n"
                                                               f"Авиакомпания: {flight['airline']}\n"
                                                               f"Откуда:{origin}({datetime.strptime(flight['departure_at'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y %H:%M')})\n"
                                                               f"Куда: {destination} ({datetime.strptime(flight['return_at'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y %H:%M')})\n"
                                                               f"Ссылка на билет: https://www.aviasales.ru/search/{origin}"
-                                                              f"{departure_at}"
-                                                              f"{destination}""1\n\n")
+                                                              f"{departure}"
+                                                              f"{destination}1?destination_airports=0&destination_airports=0\n\n")
 
                 else:
                     bot.send_message(message.chat.id, "*Нет доступных билетов на выбранные даты.*",

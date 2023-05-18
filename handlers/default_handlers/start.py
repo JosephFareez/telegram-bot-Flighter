@@ -1,8 +1,11 @@
 from telebot.types import Message
 
+
+from keyboards.inline import main_menu
 from loader import bot
 
 
 @bot.message_handler(commands=["start"])
-def bot_start(message: Message):
+def start(message):
     pass
+
