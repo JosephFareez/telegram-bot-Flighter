@@ -1,7 +1,7 @@
 import json
 from time import strftime
 import requests
-from telebot import custom_filters
+from telebot import custom_filters, types
 import config_data.config
 from loader import bot
 from states.get_states import MyStates
@@ -17,12 +17,6 @@ def _search_non_stop_ticket(message):
                      parse_mode="MarkDown")
     find_country_code(message)
 
-
-@bot.message_handler(state="*", commands=['cancel'])
-def _any_state(message):
-    """Cancel state"""
-    bot.send_message(message.chat.id, "*Ваш ввод был отменен .*", parse_mode="MarkDown")
-    bot.delete_state(message.from_user.id, message.chat.id)
 
 
 @bot.message_handler(state=MyStates.origin)
@@ -79,13 +73,14 @@ def _ready_to_answer(message):
                     for flights in trips.values():
                         for flight in flights.values():
                             departure = ''.join(filter(str.isalnum, depart_date))
+                            keyboard = types.InlineKeyboardMarkup()
+                            url_btn = types.InlineKeyboardButton(text="Ссылка на билет",
+                                                                 url=f'https://www.aviasales.ru/search/{origin}{departure}{destination}1?\n\n')
+                            keyboard.add(url_btn)
                             bot.send_message(message.chat.id, f"Цена: {flight['price']} рублей\n"
                                                               f"Авиакомпания: {flight['airline']}\n"
                                                               f"Туда: {origin} --> {destination} ({datetime.strptime(flight['departure_at'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y %H:%M')})\n"
-                                                              f"Обратно: {destination} --> {origin} ({datetime.strptime(flight['return_at'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y %H:%M')})\n"
-                                                              f"Ссылка на билет: https://www.aviasales.ru/search/{origin}"
-                                                              f"{departure}"
-                                                              f"{destination}""1?\n\n")
+                                                              f"Обратно: {destination} --> {origin} ({datetime.strptime(flight['return_at'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y %H:%M')})\n", reply_markup=keyboard)
 
                 else:
                     bot.send_message(message.chat.id, "*Нет доступных билетов на выбранные даты.*",
