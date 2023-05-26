@@ -1,6 +1,6 @@
-import json
 from time import strftime
 import requests
+from database.history_db import db_create
 from telebot import custom_filters, types
 import config_data.config
 from loader import bot
@@ -16,6 +16,7 @@ def _search_non_stop_ticket(message):
     bot.send_message(message.chat.id, f" *Введите город вылета: *",
                      parse_mode="MarkDown")
     find_country_code(message)
+    db_create(message.chat.id, message.text)
 
 
 
@@ -27,6 +28,7 @@ def _get_destination(message):
     bot.set_state(message.from_user.id, MyStates.destination, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['origin'] = find_country_code(message.text)
+        db_create(message.chat.id, message.text)
 
 
 @bot.message_handler(state=MyStates.destination)
@@ -36,12 +38,14 @@ def _get_departure_date(message):
     bot.set_state(message.from_user.id, MyStates.depart_date, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['destination'] = find_country_code(message.text)
+        db_create(message.chat.id, message.text)
 
 
 @bot.message_handler(state=MyStates.depart_date)
 def _ready_to_answer(message):
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['depart_date'] = message.text
+        db_create(message.chat.id, message.text)
         currency = 'rub'
         limit = 30
         token = config_data.config.API_KEY
@@ -75,7 +79,7 @@ def _ready_to_answer(message):
                             departure = ''.join(filter(str.isalnum, depart_date))
                             keyboard = types.InlineKeyboardMarkup()
                             url_btn = types.InlineKeyboardButton(text="Ссылка на билет",
-                                                                 url=f'https://www.aviasales.ru/search/{origin}{departure}{destination}1?\n\n')
+                                                                 url=f'https://www.aviasales.ru/search/{origin}{departure}{destination}1\n\n')
                             keyboard.add(url_btn)
                             bot.send_message(message.chat.id, f"Цена: {flight['price']} рублей\n"
                                                               f"Авиакомпания: {flight['airline']}\n"

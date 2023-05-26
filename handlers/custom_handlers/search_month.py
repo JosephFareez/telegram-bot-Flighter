@@ -1,10 +1,12 @@
 from datetime import datetime
 import requests
+from database.history_db import db_create
 from telebot import custom_filters, types
 import config_data.config
 from loader import bot
 from states.get_states import MyStates
 from database.city_finder import find_country_code
+
 
 
 @bot.message_handler(commands=['search_month'])
@@ -14,6 +16,9 @@ def _search_month(message):
     bot.send_message(message.chat.id, f" *Введите город вылета: *",
                      parse_mode="MarkDown")
     find_country_code(message)
+    db_create(message.chat.id, message.text)
+
+
 
 
 @bot.message_handler(state=MyStates.origin)
@@ -23,6 +28,8 @@ def _get_destination(message):
     bot.set_state(message.from_user.id, MyStates.destination, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['origin'] = find_country_code(message.text)
+        db_create(message.chat.id, message.text)
+
 
 
 @bot.message_handler(state=MyStates.destination)
@@ -32,6 +39,8 @@ def _get_departure_date(message):
     bot.set_state(message.from_user.id, MyStates.departure_at, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['origin'] = find_country_code(message.text)
+        db_create(message.chat.id, message.text)
+
 
 
 # result
@@ -39,6 +48,8 @@ def _get_departure_date(message):
 def _ready_to_answer(message):
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['departure_at'] = message.text
+        db_create(message.chat.id, message.text)
+
         currency = 'rub'
         limit = 30
         token = config_data.config.API_KEY
@@ -70,7 +81,7 @@ def _ready_to_answer(message):
                             departure = ''.join(filter(str.isalnum, departure_at))
                             keyboard = types.InlineKeyboardMarkup()
                             url_btn = types.InlineKeyboardButton(text="Ссылка на билет",
-                                                                 url=f'https://www.aviasales.ru/search/{origin}{departure}{destination}1?\n\n')
+                                                                 url=f'https://www.aviasales.ru/search/{origin}{departure}{destination}1\n\n')
                             keyboard.add(url_btn)
                             bot.send_message(message.chat.id, f"Цена: {flight['price']} рублей\n"
                                                               f"Авиакомпания: {flight['airline']}\n"

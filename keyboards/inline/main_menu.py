@@ -3,19 +3,22 @@ from loader import bot
 from handlers.custom_handlers import search_low_price
 from handlers.custom_handlers import search_month
 from handlers.custom_handlers import search_non_stop_tickets
-from handlers.default_handlers import help, cancel
+from handlers.default_handlers import help, cancel, history
+from database.history_db import db_create
 
 
 @bot.message_handler(commands=["start"])
 def main_menu_markup(message):
+    db_create(message.chat.id, message.text)
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     item1 = types.KeyboardButton('По датам')
     item2 = types.KeyboardButton('Переделах месяца')
     item3 = types.KeyboardButton('Без пересадок')
-    item6 = types.KeyboardButton('/help')
-    item4 = types.KeyboardButton('/cancel')
-    item5 = types.KeyboardButton('О боте')
-    markup.add(item1, item2, item3, item4, item5, item6)
+    item4 = types.KeyboardButton('/help')
+    item5 = types.KeyboardButton('/cancel')
+    item6 = types.KeyboardButton('/history')
+    item7 = types.KeyboardButton('О боте')
+    markup.add(item1, item2, item3, item4, item5, item6, item7)
 
     bot.send_message(message.chat.id, f"Привет {message.from_user.first_name} Выберите вид поиска билетов:",
                      reply_markup=markup)
@@ -26,6 +29,7 @@ def bot_message(message):
     if message.chat.type == 'private':
         if message.text == 'По датам':
             search_low_price._search_low_price(message)
+            db_create(message.chat.id, message.text)
 
         elif message.text == 'Переделах месяца':
             search_month._search_month(message)
@@ -36,10 +40,12 @@ def bot_message(message):
         elif message.text == 'О боте':
             bot.send_message(message.chat.id, '*Бот для поиск авиа билетов на саите AviaSales "Это не официальный '
                                               'бот компании"*', parse_mode='MarkDown')
-
         elif message.text == '/help':
-            help.bot_help
+            help.bot_help()
+            db_create(message.chat.id, message.text)
 
         elif message.text == '/cancel':
-            cancel._any_state
-
+            cancel._any_state()
+            db_create(message.chat.id, message.text)
+        elif message.text == '/history':
+            history._history_req()
