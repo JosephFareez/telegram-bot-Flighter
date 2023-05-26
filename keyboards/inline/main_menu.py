@@ -9,6 +9,7 @@ from database.history_db import db_create
 
 @bot.message_handler(commands=["start"])
 def main_menu_markup(message):
+    """Функция для создания кнопок с описанием каждой кнопкой"""
     db_create(message.chat.id, message.text)
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     item1 = types.KeyboardButton('По датам')
@@ -26,6 +27,7 @@ def main_menu_markup(message):
 
 @bot.message_handler(content_types=['text'])
 def bot_message(message):
+    """Функция реагирует на нажатие кнопками возвышает соответствующий команда для кнопки"""
     if message.chat.type == 'private':
         if message.text == 'По датам':
             search_low_price._search_low_price(message)

@@ -43,6 +43,7 @@ def _get_departure_date(message):
 
 @bot.message_handler(state=MyStates.depart_date)
 def _ready_to_answer(message):
+    """Функция для сбора и обработка воды пользователя и подготовка get request и отправка результат пользователю"""
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['depart_date'] = message.text
         db_create(message.chat.id, message.text)
