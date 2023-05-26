@@ -1,6 +1,6 @@
 # Flighter (telegram bot)
 #### Для поиска авиабилетов через сервер Aviasales.ru
-![](D:\python_basic_diploma\smltgl.jpg)
+
 -   ###  ***Для разработчиков*** 
 
 [Ссылка на бот](https://t.me/check_fly_bot)
