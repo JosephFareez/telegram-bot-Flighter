@@ -10,7 +10,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_KEY = os.getenv("API_KEY")
 DEFAULT_COMMANDS = (
     ("start", "Запустить бота"),
-    ("help", "Вывести справку"),
+    ("help", "Список команд и их описание"),
     ("search_low_price", "Поиск дешёвые билеты "),
     ("search_month", "поиск билеты в течение месяца"),
     ("search_non_stop_tickets", "поиск самых дешевых билетов без пересадок"),

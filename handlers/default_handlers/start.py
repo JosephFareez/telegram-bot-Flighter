@@ -1,3 +1,7 @@
+from telebot.types import Message
+
+
+from keyboards.inline import main_menu
 from loader import bot
 
 
