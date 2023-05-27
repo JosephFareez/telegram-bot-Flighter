@@ -10,7 +10,7 @@ def db_create(user_id, message, retrieve=False):
 
         conn = sqlite3.connect('users_db.db')
         cursor = conn.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS login_id (user_id INTEGER, login_count INTEGER, timestamp DATETIME, message TEXT);")
+        cursor.execute("CREATE TABLE IF NOT EXISTS login_id (user_id INTEGER PRIMARY KEY AUTOINCREMENT, login_count INTEGER, timestamp DATETIME, message TEXT);")
         # Проверьте, существует ли user_id уже в таблице
         cursor.execute("SELECT * FROM login_id WHERE user_id=?", (user_id,))
         result = cursor.fetchone()
@@ -29,7 +29,7 @@ def db_create(user_id, message, retrieve=False):
                 return messages_str
         else:
             # Пользователь не существует в таблице, вставьте новые данные с количеством входов в систему, равным 1, и новое сообщение
-            cursor.execute("INSERT INTO login_id (user_id, login_count, timestamp, message) VALUES (?, ?, ?, ?)", (user_id, 1, datetime.datetime.now(), message))
+            cursor.execute("INSERT INTO login_id (login_count, timestamp, message) VALUES (?, ?, ?)", (1, datetime.datetime.now(), message))
         conn.commit()
     except Exception as e:
         print("Error inserting data into database:", e)
