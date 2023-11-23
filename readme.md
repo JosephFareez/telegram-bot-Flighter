@@ -41,5 +41,5 @@
 
 Пример результата:
 
-![](https://gitlab.skillbox.ru/dzhozef_fariz/python_basic_diploma/-/raw/master/2023-05-26_14-58-27.png)
+![](2023-05-26_14-58-27.png)
 
