@@ -1,13 +1,17 @@
 import os
 from dotenv import load_dotenv, find_dotenv
 
-if not find_dotenv():
-    exit("Переменные окружения не загружены т.к отсутствует файл .env")
-else:
+# Load environment variables from .env file
+try:
     load_dotenv(find_dotenv())
+except FileNotFoundError:
+    print("Warning: .env file not found. Some features may not work as expected.")
 
+# Get environment variables
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_KEY = os.getenv("API_KEY")
+
+# Define default commands
 DEFAULT_COMMANDS = (
     ("start", "Запустить бота"),
     ("help", "Список команд и их описание"),

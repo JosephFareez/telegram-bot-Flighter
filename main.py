@@ -1,8 +1,12 @@
 from loader import bot
 import handlers  # noqa
-# from background import keep_alive # импорт функции для поддержки работоспособности
 
+# from background import keep_alive  # Uncomment this line if needed
 
 if __name__ == "__main__":
+    # Uncomment the line below if needed
     # keep_alive()
-    bot.infinity_polling()
+
+    # Import the test module conditionally
+    if __name__ == "main":
+        bot.infinity_polling()
