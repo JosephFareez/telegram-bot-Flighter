@@ -19,7 +19,8 @@ def main_menu_markup(message):
     item5 = types.KeyboardButton('/cancel')
     item6 = types.KeyboardButton('/history')
     item7 = types.KeyboardButton('О боте')
-    markup.add(item1, item2, item3, item4, item5, item6, item7)
+    item8 = types.KeyboardButton('start_mini_app')
+    markup.add(item1, item2, item3, item4, item5, item6, item7, item8)
 
     bot.send_message(message.chat.id, f"Привет {message.from_user.first_name} Выберите вид поиска билетов:",
                      reply_markup=markup)
@@ -51,3 +52,6 @@ def bot_message(message):
             db_create(message.chat.id, message.text)
         elif message.text == '/history':
             history._history_req()
+
+        elif message.text == 'start_mini_app':
+            mini_app_start.start_mini_app(message)
