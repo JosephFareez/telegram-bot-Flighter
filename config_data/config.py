@@ -8,8 +8,8 @@ except FileNotFoundError:
     print("Warning: .env file not found. Some features may not work as expected.")
 
 # Get environment variables
-BOT_TOKEN = "5954784421:AAEHcEz78Q6g0ltgKdolw9Ifg2IXugzO-KQ"
-API_KEY = "e4d8752ced482a0ec031f969c5e5f20c"
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+API_KEY = os.getenv("API_KEY")
 
 # Define default commands
 DEFAULT_COMMANDS = (
